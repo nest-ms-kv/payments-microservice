@@ -3,6 +3,7 @@ import * as joi from 'joi';
 
 interface EnvVars {
   PORT: number;
+  NATS_SERVERS: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_PUBLIC_KEY: string;
   STRIPE_ENDPOINT_SECRET: string;
@@ -13,6 +14,7 @@ interface EnvVars {
 const envsSchema = joi
   .object({
     PORT: joi.number().default(3000),
+    NATS_SERVERS: joi.array().items(joi.string()).required(),
     STRIPE_SECRET_KEY: joi.string().required(),
     STRIPE_PUBLIC_KEY: joi.string().required(),
     STRIPE_ENDPOINT_SECRET: joi.string().required(),
@@ -21,7 +23,10 @@ const envsSchema = joi
   })
   .unknown();
 
-const { error, value } = envsSchema.validate(process.env);
+const { error, value } = envsSchema.validate({
+  ...process.env,
+  NATS_SERVERS: process.env.NATS_SERVERS?.split(','),
+});
 
 if (error) {
   throw new Error(`Config validation error: ${error.message}`);
@@ -31,6 +36,7 @@ const envVars: EnvVars = value;
 
 export const envs = {
   port: envVars.PORT,
+  natsServers: envVars.NATS_SERVERS,
   StripeSecretKey: envVars.STRIPE_SECRET_KEY,
   StripePublicKey: envVars.STRIPE_PUBLIC_KEY,
   StripeEndpointSecret: envVars.STRIPE_ENDPOINT_SECRET,
